@@ -1,25 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import Matrix from "./component/Matrix";
+import "./App.css"; // Import du style global (fond noir)
+import "./css/Matrix.css"; // Import du style de la matrice
 
-function App() {
+export default function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="App-header">
+        {/* Titre stylisé en vert */}
+        <h1 className="main-title">PROJET <span className="highlight">CRA</span></h1>
+        
+        {/* Ta matrice est automatiquement centrée par le CSS de App-header */}
+        <Matrix rows={5} /> 
+      </div>
     </div>
   );
 }
-
-export default App;

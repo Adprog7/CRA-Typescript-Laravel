@@ -1,0 +1,54 @@
+/* Matrix.css */
+.matrix-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0a0a0a;
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid #1a1a1a;
+}
+
+.matrix-row {
+  display: flex;
+  gap: 15px; /* Espace entre les cases */
+  margin-bottom: 15px;
+}
+
+.matrix-cell {
+  width: 120px;  /* GROS */
+  height: 90px;  /* GROS */
+  border: 2px solid #222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+/* Vert quand c'est rempli */
+.matrix-cell.value-1 {
+  background-color: #00e676;
+  color: #000;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+  border-color: #00e676;
+}
+
+/* Orange/Vert pâle pour le 0.5 */
+.matrix-cell.value-05 {
+  border-color: #00e676;
+  color: #00e676;
+  background-color: rgba(0, 230, 118, 0.1);
+}
+
+.matrix-cell.value-empty {
+  background-color: #111;
+}
+
+.matrix-cell:hover {
+  transform: translateY(-5px);
+  border-color: #444;
+}
