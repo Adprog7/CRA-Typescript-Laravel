@@ -1,5 +1,6 @@
 import React from "react";
 import Matrix from "./component/Matrix";
+import Missions from "./component/Missions";
 import "./App.css"; // Import du style global (fond noir)
 import "./css/Matrix.css"; // Import du style de la matrice
 
@@ -13,6 +14,9 @@ export default function App() {
         {/* Ta matrice est automatiquement centrée par le CSS de App-header */}
         <Matrix rows={5} /> 
       </div>
+      
+      {/* Composant pour afficher les missions du back */}
+      <Missions />
     </div>
   );
 }
