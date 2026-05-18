@@ -1,42 +1,58 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import '../App.css';
 
-export default function BudgetSummary({ missions, refreshMissions }) {
+function MissionDetails({ missionId }) {
+  const { data: monthlyStats = [], isLoading } = useQuery({
+    queryKey: ['monthlyStats', missionId],
+    queryFn: async () => {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/missions/${missionId}/monthly`);
+      if (!response.ok) throw new Error("Erreur de récupération des détails mensuels");
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return <p style={{ fontSize: '13px', color: '#666' }}>Chargement...</p>;
+  }
+
+  if (monthlyStats.length === 0) {
+    return <p style={{ fontSize: '13px', color: '#666' }}>Aucune donnée trouvée pour cette mission.</p>;
+  }
+
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+      <thead>
+        <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
+          <th style={{ padding: '8px 0' }}>Mois</th>
+          <th style={{ padding: '8px 0' }}>Jours</th>
+          <th style={{ padding: '8px 0' }}>Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        {monthlyStats.map((stat, idx) => (
+          <tr key={idx} style={{ borderBottom: '1px solid #f9f9f9' }}>
+            <td style={{ padding: '8px 0' }}>{stat.month}</td>
+            <td style={{ padding: '8px 0' }}><strong>{parseFloat(stat.total_days).toFixed(1)} j</strong></td>
+            <td style={{ padding: '8px 0' }}><strong>{parseFloat(stat.cost).toFixed(0)} €</strong></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export default function BudgetSummary({ missions = [] }) {
   const navigate = useNavigate();
   const [expandedMissions, setExpandedMissions] = useState(new Set());
-  const [monthlyStats, setMonthlyStats] = useState({});
-  const [loadingDetails, setLoadingDetails] = useState(new Set());
 
-  useEffect(() => {
-    if (refreshMissions) {
-      refreshMissions();
-    }
-  }, [refreshMissions]);
-
-  const toggleDetails = async (missionId) => {
+  const toggleDetails = (missionId) => {
     const newExpanded = new Set(expandedMissions);
     if (newExpanded.has(missionId)) {
       newExpanded.delete(missionId);
     } else {
       newExpanded.add(missionId);
-      
-      // Charger les stats si pas encore chargées
-      if (!monthlyStats[missionId]) {
-        setLoadingDetails(prev => new Set(prev).add(missionId));
-        try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/missions/${missionId}/monthly`);
-          const data = await response.json();
-          setMonthlyStats(prev => ({ ...prev, [missionId]: data }));
-        } catch (error) {
-          console.error('Erreur lors du chargement des détails mensuels:', error);
-        }
-        setLoadingDetails(prev => {
-          const next = new Set(prev);
-          next.delete(missionId);
-          return next;
-        });
-      }
     }
     setExpandedMissions(newExpanded);
   };
@@ -129,30 +145,7 @@ export default function BudgetSummary({ missions, refreshMissions }) {
                     {isExpanded && (
                       <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
                         <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#333' }}>Répartition mensuelle</h4>
-                        {loadingDetails.has(mission.id) ? (
-                          <p style={{ fontSize: '13px', color: '#666' }}>Chargement...</p>
-                        ) : monthlyStats[mission.id] && monthlyStats[mission.id].length > 0 ? (
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                            <thead>
-                              <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
-                                <th style={{ padding: '8px 0' }}>Mois</th>
-                                <th style={{ padding: '8px 0' }}>Jours</th>
-                                <th style={{ padding: '8px 0' }}>Montant</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {monthlyStats[mission.id].map((stat, idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                  <td style={{ padding: '8px 0' }}>{stat.month}</td>
-                                  <td style={{ padding: '8px 0' }}><strong>{parseFloat(stat.total_days).toFixed(1)} j</strong></td>
-                                  <td style={{ padding: '8px 0' }}><strong>{parseFloat(stat.cost).toFixed(0)} €</strong></td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p style={{ fontSize: '13px', color: '#666' }}>Aucune donnée trouvée pour cette mission.</p>
-                        )}
+                        <MissionDetails missionId={mission.id} />
                       </div>
                     )}
                   </li>
