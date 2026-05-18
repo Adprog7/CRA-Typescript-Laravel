@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getWeekDates } from "../utils/getWeekDates";
 import "../css/Matrix.css";
 
@@ -9,90 +11,101 @@ const toggleValue = (value) => {
   return "";
 };
 
+const toISOLocal = (dateObj) => {
+  const d = new Date(dateObj);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split("T")[0];
+};
+
 export default function Matrix({ missions = [], userId, isClient = false }) {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const weekOffset = parseInt(searchParams.get("week") || "0", 10);
+
+  const setWeekOffset = (newOffset) => {
+    setSearchParams({ week: newOffset.toString() });
+  };
+
   const [saveMessage, setSaveMessage] = useState("");
   const timeoutRef = useRef(null);
 
-  const week = getWeekDates(weekOffset);
+  const week = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
   const cols = week.length;
-  const rows = missions.length; // Calcul du compte de lignes dynamiquement
+  const rows = missions.length;
 
-  const toISOLocal = (dateObj) => {
-    const d = new Date(dateObj);
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    return d.toISOString().split("T")[0];
-  };
-
-  // 📌 Génère une clé unique pour la semaine
-  const weekKey = (() => {
-    const monday = week[0].date;
-    const y = monday.getFullYear();
-    const m = String(monday.getMonth() + 1).padStart(2, "0");
-    const d = String(monday.getDate()).padStart(2, "0");
-    return `week-${y}-${m}-${d}`;
-  })();
+  const startDate = toISOLocal(week[0].date);
+  const endDate = toISOLocal(week[week.length - 1].date);
 
   const [matrix, setMatrix] = useState(() => Array.from({ length: rows }, () => Array(cols).fill("")));
 
-  // 📌 Recharger la matrice depuis le backend lorsqu’on change de semaine
+  // Fetch CRA week
+  const { data: craEntries = [] } = useQuery({
+    queryKey: ['cra', userId, startDate, endDate],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/cra/week?user_id=${userId}&startDate=${startDate}&endDate=${endDate}`);
+      if (!res.ok) throw new Error("Erreur lors de la récupération du CRA");
+      return res.json();
+    },
+    enabled: missions.length > 0 && !!userId,
+  });
+
+  // Sync query data to local matrix draft state
   useEffect(() => {
-    if (missions.length === 0 || !userId) return;
+    if (missions.length === 0) return;
 
-    let isActive = true;
+    const newMatrix = Array.from({ length: missions.length }, () => Array(cols).fill(""));
 
-    const fetchCra = async () => {
-      const startDate = toISOLocal(week[0].date);
-      const endDate = toISOLocal(week[week.length - 1].date);
-      
-      try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/cra/week?user_id=${userId}&startDate=${startDate}&endDate=${endDate}`);
-        const data = await res.json();
-        
-        if (!isActive) return;
-
-        // Initialiser une matrice vide correspondant aux missions
-        const newMatrix = Array.from({ length: missions.length }, () => Array(cols).fill(""));
-        
-        // Remplir avec les données du serveur
-        data.forEach(entry => {
-          const missionIndex = missions.findIndex(m => m.id === entry.mission_id);
-          if (missionIndex !== -1) {
-            const dayIndex = week.findIndex(d => toISOLocal(d.date) === entry.date);
-            if (dayIndex !== -1) {
-              const val = parseFloat(entry.time);
-              newMatrix[missionIndex][dayIndex] = val === 1 ? "1" : val === 0.5 ? "0.5" : "";
-            }
-          }
-        });
-        
-        setMatrix(newMatrix);
-      } catch (err) {
-        console.error("Erreur API:", err);
+    craEntries.forEach(entry => {
+      const missionIndex = missions.findIndex(m => m.id === entry.mission_id);
+      if (missionIndex !== -1) {
+        const dayIndex = week.findIndex(d => toISOLocal(d.date) === entry.date);
+        if (dayIndex !== -1) {
+          const val = parseFloat(entry.time);
+          newMatrix[missionIndex][dayIndex] = val === 1 ? "1" : val === 0.5 ? "0.5" : "";
+        }
       }
-    };
+    });
 
-    fetchCra();
+    setMatrix(newMatrix);
+  }, [craEntries, missions, cols, week]);
 
-    return () => {
-      isActive = false;
-    };
-  }, [weekKey, missions, userId]);
+  // Save CRA mutation
+  const saveCraMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/cra/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Erreur de sauvegarde");
+      return res.json();
+    },
+    onMutate: () => {
+      setSaveMessage("Sauvegarde en cours...");
+    },
+    onSuccess: () => {
+      setSaveMessage("CRA sauvegardé avec succès !");
+      setTimeout(() => setSaveMessage(""), 4000);
+      queryClient.invalidateQueries({ queryKey: ['cra', userId, startDate, endDate] });
+      queryClient.invalidateQueries({ queryKey: ['missions'] });
+    },
+    onError: (err) => {
+      console.error(err);
+      setSaveMessage("Erreur lors de la sauvegarde.");
+    }
+  });
 
   const handleClick = (row, col) => {
-    if (isClient) return; // Lecture seule pour les clients
+    if (isClient) return;
     const updated = matrix.map((r, i) =>
       r.map((c, j) => (i === row && j === col ? toggleValue(c) : c))
     );
     setMatrix(updated);
-    
-    // Auto-save logic with 1-second debounce
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
-    setIsSaving(true); // Indicate saving intent
+
     setSaveMessage("En attente de sauvegarde...");
 
     timeoutRef.current = setTimeout(() => {
@@ -100,10 +113,7 @@ export default function Matrix({ missions = [], userId, isClient = false }) {
     }, 1000);
   };
 
-  const handleValidate = async (matrixToSave = matrix) => {
-    setIsSaving(true);
-    setSaveMessage("Sauvegarde en cours...");
-    
+  const handleValidate = (matrixToSave = matrix) => {
     const entries = [];
     matrixToSave.forEach((row, i) => {
       row.forEach((value, j) => {
@@ -118,46 +128,35 @@ export default function Matrix({ missions = [], userId, isClient = false }) {
     });
 
     const payload = {
-      startDate: toISOLocal(week[0].date),
-      endDate: toISOLocal(week[week.length - 1].date),
+      startDate: startDate,
+      endDate: endDate,
       mission_ids: missions.map(m => m.id),
       entries: entries
     };
 
-    try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/cra/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setSaveMessage("CRA sauvegardé avec succès !");
-        setTimeout(() => setSaveMessage(""), 4000);
-      } else {
-        setSaveMessage("Erreur lors de la sauvegarde.");
-      }
-    } catch (err) {
-      console.error(err);
-      setSaveMessage("Erreur réseau lors de la sauvegarde.");
-    }
-    setIsSaving(false);
+    saveCraMutation.mutate(payload);
   };
 
   return (
     <div className="matrix-wrapper">
       {isClient && (
         <div style={{ backgroundColor: '#2c3e50', color: 'white', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontWeight: 'bold' }}>
-           Vue Client - Lecture Seule
+          Vue Client - Lecture Seule
         </div>
       )}
       {/* Navigation */}
-      <div className="matrix-navigation">
+      <div className="matrix-navigation" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
         <button className="matrix-nav-btn" onClick={() => {
           setMatrix(Array.from({ length: rows }, () => Array(cols).fill("")));
           setWeekOffset(weekOffset - 1);
         }}>
           Semaine précédente
         </button>
+        {saveMessage && (
+          <span className="save-status-message" style={{ color: '#0066cc', fontWeight: '500', minWidth: '200px', textAlign: 'center' }}>
+            {saveMessage}
+          </span>
+        )}
         <button className="matrix-nav-btn" onClick={() => {
           setMatrix(Array.from({ length: rows }, () => Array(cols).fill("")));
           setWeekOffset(weekOffset + 1);
@@ -196,8 +195,8 @@ export default function Matrix({ missions = [], userId, isClient = false }) {
                     (value === "1"
                       ? "value-1"
                       : value === "0.5"
-                      ? "value-05"
-                      : "value-empty")
+                        ? "value-05"
+                        : "value-empty")
                   }
                 >
                   {value}
