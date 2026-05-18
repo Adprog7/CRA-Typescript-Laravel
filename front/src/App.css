@@ -12,7 +12,7 @@
 
 .App-header {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   background: white;
   border-radius: 12px;
   padding: 40px;
@@ -124,6 +124,58 @@
   margin: 0;
   color: #666;
   font-size: 13px;
+}
+
+/* Formulaire de création de mission */
+.missions-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.missions-header-row h2 {
+  margin: 0;
+}
+
+.create-mission-form {
+  display: flex;
+  gap: 10px;
+}
+
+.create-mission-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  min-width: 200px;
+  transition: border-color 0.2s;
+}
+
+.create-mission-input:focus {
+  border-color: #0066cc;
+}
+
+.create-mission-btn {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.create-mission-btn:hover:not(:disabled) {
+  background: #0052a3;
+}
+
+.create-mission-btn:disabled {
+  background: #99c2ff;
+  cursor: not-allowed;
 }
 
 /* Responsive */

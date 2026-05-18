@@ -30,6 +30,7 @@ export default function Login({ onLoginSuccess }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
@@ -107,6 +108,9 @@ export default function Login({ onLoginSuccess }) {
 
         <div className="auth-footer">
           <p>Pas encore de compte ? <a href="/register">S'inscrire</a></p>
+          <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <p>Vous êtes un client ? <a href="/client-login" style={{ color: '#00f2fe', fontWeight: 'bold' }}>Accès Entreprise</a></p>
+          </div>
         </div>
       </div>
     </div>
