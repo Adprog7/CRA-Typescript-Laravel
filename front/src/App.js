@@ -21,7 +21,7 @@ export default function App() {
   const [newCompanyName, setNewCompanyName] = useState('');
   const [creatingCompany, setCreatingCompany] = useState(false);
 
-  // Vérifier si l'utilisateur est connecté au démarrage
+
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -68,7 +68,7 @@ export default function App() {
   const handleCreateMission = async (e) => {
     e.preventDefault();
     if (!newMissionName.trim()) return;
-    
+
     setCreatingMission(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/missions`, {
@@ -85,7 +85,7 @@ export default function App() {
           rate: newMissionRate ? parseFloat(newMissionRate) : null
         })
       });
-      
+
       if (response.ok) {
         setNewMissionName('');
         setNewMissionBudget('');
@@ -104,7 +104,7 @@ export default function App() {
   const handleCreateCompany = async (e) => {
     e.preventDefault();
     if (!newCompanyName.trim()) return;
-    
+
     setCreatingCompany(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/companies`, {
@@ -118,7 +118,7 @@ export default function App() {
           name: newCompanyName,
         })
       });
-      
+
       if (response.ok) {
         setNewCompanyName('');
         fetchClients(); // Recharger la liste des clients
@@ -203,17 +203,17 @@ export default function App() {
                     <div className="companies-container" style={{ background: '#f8f9fa', padding: '25px', borderRadius: '8px', marginBottom: '20px' }}>
                       <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#222' }}>Gestion des clients</h3>
                       <form className="create-mission-form" onSubmit={handleCreateCompany} style={{ marginBottom: 0 }}>
-                        <input 
-                          type="text" 
-                          placeholder="Nom de la nouvelle entreprise..." 
+                        <input
+                          type="text"
+                          placeholder="Nom de la nouvelle entreprise..."
                           value={newCompanyName}
                           onChange={(e) => setNewCompanyName(e.target.value)}
                           disabled={creatingCompany}
                           className="create-mission-input"
                         />
-                        <button 
-                          type="submit" 
-                          disabled={creatingCompany || !newCompanyName.trim()} 
+                        <button
+                          type="submit"
+                          disabled={creatingCompany || !newCompanyName.trim()}
                           className="create-mission-btn"
                         >
                           {creatingCompany ? "Création..." : "+ Créer Entreprise"}
@@ -229,34 +229,34 @@ export default function App() {
                       <h2>Missions ({missions.length})</h2>
                       {user.client !== 1 && (
                         <form className="create-mission-form" onSubmit={handleCreateMission}>
-                          <input 
-                            type="text" 
-                            placeholder="Nouvelle mission..." 
+                          <input
+                            type="text"
+                            placeholder="Nouvelle mission..."
                             value={newMissionName}
                             onChange={(e) => setNewMissionName(e.target.value)}
                             disabled={creatingMission}
                             className="create-mission-input"
                           />
-                          <input 
-                            type="number" 
-                            placeholder="Budget (€)" 
+                          <input
+                            type="number"
+                            placeholder="Budget (€)"
                             value={newMissionBudget}
                             onChange={(e) => setNewMissionBudget(e.target.value)}
                             disabled={creatingMission}
                             className="create-mission-input"
                             style={{ marginLeft: '10px', width: '100px' }}
                           />
-                          <input 
-                            type="number" 
-                            placeholder="TJM (€/j)" 
+                          <input
+                            type="number"
+                            placeholder="TJM (€/j)"
                             value={newMissionRate}
                             onChange={(e) => setNewMissionRate(e.target.value)}
                             disabled={creatingMission}
                             className="create-mission-input"
                             style={{ marginLeft: '10px', width: '90px' }}
                           />
-                          <select 
-                            value={selectedClient} 
+                          <select
+                            value={selectedClient}
                             onChange={(e) => setSelectedClient(e.target.value)}
                             disabled={creatingMission}
                             className="create-mission-input"
@@ -267,9 +267,9 @@ export default function App() {
                               <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                           </select>
-                          <button 
-                            type="submit" 
-                            disabled={creatingMission || !newMissionName.trim()} 
+                          <button
+                            type="submit"
+                            disabled={creatingMission || !newMissionName.trim()}
                             className="create-mission-btn"
                           >
                             {creatingMission ? "Création..." : "+ Ajouter"}
