@@ -152,7 +152,6 @@ Route::post('/companies', function (Request $request) {
         'client' => 1,
         'client_id' => $clientId,
         'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
     return response()->json([

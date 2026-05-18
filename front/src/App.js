@@ -44,7 +44,7 @@ export default function App() {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/clients`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/clients?t=${new Date().getTime()}`);
       const data = await response.json();
       setClients(data);
     } catch (error) {
@@ -121,7 +121,7 @@ export default function App() {
 
       if (response.ok) {
         setNewCompanyName('');
-        fetchClients(); // Recharger la liste des clients
+        await fetchClients(); // Recharger la liste des clients
       } else {
         console.error('Erreur du serveur lors de la création de l\'entreprise');
       }
