@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import BudgetSummary from "./component/BudgetSummary";
 import Matrix from "./component/Matrix";
-import Login from "./component/Login";
-import Register from "./component/Register";
-import ClientLogin from "./component/ClientLogin";
-import "./App.css";
-import "./css/Matrix.css";
+import Missions from "./component/Missions";
+import "./App.css"; // Import du style global (fond noir)
+import "./css/Matrix.css"; // Import du style de la matrice
 
 export default function App() {
   const [missions, setMissions] = useState([]);
@@ -145,172 +143,17 @@ export default function App() {
 
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            user ? <Navigate to="/" replace /> : <Login onLoginSuccess={handleLoginSuccess} />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            user ? <Navigate to="/" replace /> : <Register />
-          }
-        />
-        <Route
-          path="/client-login"
-          element={
-            user ? <Navigate to="/" replace /> : <ClientLogin onLoginSuccess={handleLoginSuccess} />
-          }
-        />
-        <Route
-          path="/budgets"
-          element={
-            !user ? <Navigate to="/login" replace /> : <BudgetSummary missions={missions} refreshMissions={fetchMissions} />
-          }
-        />
-        <Route
-          path="/"
-          element={
-            !user ? (
-              <Navigate to="/login" replace />
-            ) : (
-              <div className="App">
-                <div className="App-header">
-                  <div className="top-bar">
-                    <h1 className="main-title">PROJET <span className="highlight">CRA</span></h1>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                      <Link to="/budgets" style={{ textDecoration: 'none' }}>
-                        <button className="logout-button" style={{ background: '#0066cc' }}>
-                          VOIR BUDGETS
-                        </button>
-                      </Link>
-                      <button className="logout-button" onClick={handleLogout}>
-                        DÉCONNEXION
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="user-info">
-                    Connecté en tant que: {user.email} {user.client === 1 && <span className="client-badge">(Compte Client)</span>}
-                  </p>
-
-                  <Matrix missions={missions} userId={user.id} isClient={user.client === 1} />
-
-                  {user.client !== 1 && (
-                    <div className="companies-container" style={{ background: '#f8f9fa', padding: '25px', borderRadius: '8px', marginBottom: '20px' }}>
-                      <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#222' }}>Gestion des clients</h3>
-                      <form className="create-mission-form" onSubmit={handleCreateCompany} style={{ marginBottom: 0 }}>
-                        <input
-                          type="text"
-                          placeholder="Nom de la nouvelle entreprise..."
-                          value={newCompanyName}
-                          onChange={(e) => setNewCompanyName(e.target.value)}
-                          disabled={creatingCompany}
-                          className="create-mission-input"
-                        />
-                        <button
-                          type="submit"
-                          disabled={creatingCompany || !newCompanyName.trim()}
-                          className="create-mission-btn"
-                        >
-                          {creatingCompany ? "Création..." : "+ Créer Entreprise"}
-                        </button>
-                      </form>
-                    </div>
-                  )}
-
-                  <div className="missions-container">
-
-
-                    <div className="missions-header-row">
-                      <h2>Missions ({missions.length})</h2>
-                      {user.client !== 1 && (
-                        <form className="create-mission-form" onSubmit={handleCreateMission}>
-                          <input
-                            type="text"
-                            placeholder="Nouvelle mission..."
-                            value={newMissionName}
-                            onChange={(e) => setNewMissionName(e.target.value)}
-                            disabled={creatingMission}
-                            className="create-mission-input"
-                          />
-                          <input
-                            type="number"
-                            placeholder="Budget (€)"
-                            value={newMissionBudget}
-                            onChange={(e) => setNewMissionBudget(e.target.value)}
-                            disabled={creatingMission}
-                            className="create-mission-input"
-                            style={{ marginLeft: '10px', width: '100px' }}
-                          />
-                          <input
-                            type="number"
-                            placeholder="TJM (€/j)"
-                            value={newMissionRate}
-                            onChange={(e) => setNewMissionRate(e.target.value)}
-                            disabled={creatingMission}
-                            className="create-mission-input"
-                            style={{ marginLeft: '10px', width: '90px' }}
-                          />
-                          <select
-                            value={selectedClient}
-                            onChange={(e) => setSelectedClient(e.target.value)}
-                            disabled={creatingMission}
-                            className="create-mission-input"
-                            style={{ marginLeft: '10px' }}
-                          >
-                            <option value="">-- Sans client --</option>
-                            {clients.map(c => (
-                              <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                          </select>
-                          <button
-                            type="submit"
-                            disabled={creatingMission || !newMissionName.trim()}
-                            className="create-mission-btn"
-                          >
-                            {creatingMission ? "Création..." : "+ Ajouter"}
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                    {loading && <p>Chargement...</p>}
-                    {missions.length === 0 && !loading && (
-                      <p>Aucune mission trouvée.</p>
-                    )}
-                    {missions.length > 0 && (
-                      <ul>
-                        {missions.map((mission) => (
-                          <li key={mission.id}>
-                            <strong>{mission.name}</strong>
-                            {user.client !== 1 && mission.company_name && (
-                              <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#aaa', fontStyle: 'italic' }}>
-                                Entreprise : {mission.company_name}
-                              </p>
-                            )}
-                            {(mission.budget || mission.rate) && (
-                              <div style={{ margin: '0 0 10px 0', fontSize: '0.9em', color: '#ccc' }}>
-                                <p style={{ margin: '0 0 5px 0' }}>
-                                  {mission.budget && <span style={{ marginRight: '15px' }}>Budget : {mission.budget} €</span>}
-                                  {mission.rate && <span>TJM : {mission.rate} €/j</span>}
-                                </p>
-                              </div>
-                            )}
-                            {mission.description && <p style={{ margin: '5px 0 0 0' }}>{mission.description}</p>}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          }
-        />
-      </Routes>
-    </Router>
+    <div className="App">
+      <div className="App-header">
+        {/* Titre stylisé en vert */}
+        <h1 className="main-title">PROJET <span className="highlight">CRA</span></h1>
+        
+        {/* Ta matrice est automatiquement centrée par le CSS de App-header */}
+        <Matrix rows={5} /> 
+      </div>
+      
+      {/* Composant pour afficher les missions du back */}
+      <Missions />
+    </div>
   );
 }
