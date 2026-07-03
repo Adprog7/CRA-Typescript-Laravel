@@ -66,3 +66,26 @@ cd front
    npm start
    ```
    *L'interface web va s'ouvrir automatiquement dans votre navigateur (généralement sur http://localhost:3000)*
+
+---
+
+### 📱 3. Configuration de l'Application Mobile (React Native / Expo)
+
+L'application mobile se trouve dans le dossier `mobile`. Elle communique également avec le backend Laravel.
+
+Ouvrez un **nouveau** terminal et placez-vous dans le dossier `mobile` :
+```bash
+cd mobile
+```
+
+1. Installez les dépendances :
+   ```bash
+   npm install
+   ```
+2. Configurez l'URL de l'API :
+   Par défaut, l'application mobile tentera de se connecter au backend. Assurez-vous que votre backend est accessible (si vous testez sur un appareil physique, vous devrez peut-être lancer le backend avec `php artisan serve --host=0.0.0.0` et utiliser l'IP de votre machine au lieu de localhost dans l'app mobile).
+3. Démarrez le serveur Expo :
+   ```bash
+   npm start
+   ```
+   *Une page web Expo s'ouvrira ou un QR code s'affichera dans le terminal. Vous pouvez scanner ce QR code avec l'application Expo Go sur votre smartphone pour tester l'application, ou utiliser un émulateur Android/iOS.*
